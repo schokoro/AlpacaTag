@@ -41,3 +41,4 @@ services:
 volumes:
   node_modules:
   venv:
+    - ./venv:/src
