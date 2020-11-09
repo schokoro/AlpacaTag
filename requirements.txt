@@ -41,4 +41,5 @@ spacy
 pyzmq >= 17.1.0
 termcolor
 flair==0.4.3
+torch==1.1.0
 pandas
