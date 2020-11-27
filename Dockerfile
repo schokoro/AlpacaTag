@@ -13,7 +13,7 @@ RUN apt-get install -yqq build-essential cmake curl gfortran git graphviz libatl
         libatlas3-base libblas-dev libbz2-dev libffi-dev libfreetype6-dev libhdf5-dev liblapack-dev \
         liblapacke-dev liblzma-dev libncurses5-dev libpng-dev libreadline-dev libsqlite3-dev \
         libssl-dev libxml2-dev libxmlsec1-dev libxslt-dev llvm locales make nano nodejs pkg-config \
-        tk-dev tmux tzdata unixodbc-dev wget xz-utils zlib1g-dev  && apt-get clean
+        tk-dev tmux tzdata unixodbc-dev wget xz-utils zlib1g-dev > /dev/null && apt-get clean
 
 ENV PYENV_ROOT /opt/.pyenv
 RUN curl -L https://raw.githubusercontent.com/yyuu/pyenv-installer/master/bin/pyenv-installer | bash
@@ -23,10 +23,17 @@ RUN pyenv global 3.7.7
 
 RUN pip  install -U pip
 
-COPY requirements.txt /src/requirements.txt
-RUN pip install -r /src/requirements.txt && \
+RUN cd / && git clone https://github.com/schokoro/AlpacaTag.git src
+RUN pip install -r /src/requirements.txt > /dev/null && \
         python -c "import shutil ; shutil.rmtree('/root/.cache')"
 RUN python -m spacy download en
-#RUN cd /src/alpaca_server/ && python -m pip install .
-#RUN cd /src/alpaca_client/ && python -m pip install .
 
+RUN cd /src/alpaca_server/ && python -m pip install .
+RUN cd /src/alpaca_client/ && python -m pip install .
+
+RUN cd /src/annotation/AlpacaTag/server && npm install  -g npm && npm audit fix --force && npm run build && cd .. && python manage.py migrate
+WORKDIR /src/annotation/AlpacaTag/server 
+COPY entrypoint.sh /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
+CMD [ "python", "manage.py", "runserver", "0.0.0.0:8000" ]
+EXPOSE 8000
